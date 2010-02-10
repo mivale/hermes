@@ -1,4 +1,4 @@
 <?php
-include('lib.uuid.php');
+include('../library/lib.uuid.php');
 $uuid = UUID::mint();
-var_dump($uuid->hex);
+var_dump($uuid->string);
