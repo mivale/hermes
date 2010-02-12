@@ -34,7 +34,7 @@ class Hermes_Server {
 				/**
 				 * TODO: differentiate between create/send/stats/etc.
 				 * 
-				 * very crude hack - should be converted to url recognitions
+				 * very crude hack - should be converted to url recognition
 				 */
 				$post = $this->_getPost();
 				$method = '_public_'.$post['method'];

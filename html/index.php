@@ -1,4 +1,9 @@
 <?php
+/**
+ * @author Michiel van Leening <leening@dmmw.nl>
+ */
+
+//var_dump($_SERVER); exit;
 
 set_include_path(realpath(__DIR__.'/..'));
 
