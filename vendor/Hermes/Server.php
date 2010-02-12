@@ -18,6 +18,7 @@
 
 class Hermes_Server {
 	protected $DB;
+	protected $client;
 	
 	/**
 	 * Initialize
@@ -44,9 +45,10 @@ class Hermes_Server {
 	}
 
 	/**
+	 * @param string $url the url to handle
 	 * @return void
 	 */
-	public function accept() {
+	public function accept($url) {
 		$apikey = $this->_getRequestApiKey();
 		if (empty($apikey)) {
 			$this->_sendError(array('code'=> 401, 'message' => 'No API key received'));
@@ -54,36 +56,37 @@ class Hermes_Server {
 			if (!$this->_validateApiKey($apikey)) {
 				$this->_sendResult(array('code'=> 412, 'message' => 'Invalid key received'));
 			} else {
-				/**
-				 * TODO: differentiate between create/send/stats/etc.
-				 * 
-				 * very crude hack - should be converted to url recognition
-				 */
 				$post = $this->_getPost();
-				$method = '_public_'.$post['method'];
-				if (isset($post['method']) && is_callable(array($this, $method))) {
-					$this->$method($post);
-				} else {
-					$this->_createRun($post);
+				switch ($url) {
+					case '/create' :
+						$this->_createRun($post);
+						break;
+					case '/batch' :
+						$this->_sendBatch($post);
+						break;
+					default :
+						// return error if json request else redirect homepage
+						$this->_sendError(array('code'=> 501, 'message' => 'Not Implemented'));
+						break;
 				}
 			}
 		}
 	}
 	
 	/**
-	 * THIS IS FUGLY !!!! MUST DO OTHERWISE
 	 * @param array $post
 	 * @return string
 	 */
-	private function _public_sendBatch($post = null) {
+	private function _sendBatch($post = null) {
+		$result = array('code'=> 501, 'message' => 'Not Implemented');
+		$this->_sendError($result);
 	}
 	
 	/**
-	 * THIS IS FUGLY !!!! MUST DO OTHERWISE
 	 * @param array $post
 	 * @return string
 	 */
-	private function _public_createRun($post = null) {
+	private function _createRun($post = null) {
 		include_once('library/lib.uuid.php');
 		$uuid = UUID::mint();
 		if ($uuid) {
@@ -93,10 +96,13 @@ class Hermes_Server {
 			/**
 			 * add all known given tags to the response - these tags can be used by the client
 			 */
-			$tags = $this->_findTags($post['tags']);
-			exit;
 			
-			$this->_sendOk($result);
+			if ($this->_validateTags($this->_findTags(), $post['tags'])) {
+				$this->_sendOk($result);
+			} else {
+				$result = array('code'=> 500, 'message' => 'Error in tag validation');
+				$this->_sendError($result);
+			}
 		} else {
 			$result = array('code'=> 500, 'message' => 'Server error minting uuid');
 			$this->_sendError($result);
@@ -107,13 +113,33 @@ class Hermes_Server {
 	 * Return tags from the DB for the currently connected client
 	 * optionally filtering by given tags
 	 * 
+	 * @return array $tags the found tags as an associative array
+	 */
+	private function _findTags() {
+		// client is validated, and record has already been loaded
+		// now go and search the database
+		$this->client->tags = $this->DB->findAllRowsBy('tag', 'klant_id = '.$this->client->id);
+		return $this->client->tags;
+	}
+	
+	/**
+	 * Validate current clients tags 
+	 * 
 	 * @param array $tags array of tag uuids to search for
 	 * @return array $tags the found tags as an associative array
 	 */
-	private function _findTags($tags) {
-		// now go and search the database
-		$client = $this->DB->findAllRowsBy('klant', 'key = "'.$this->_getRequestApiKey().'"');
-		var_dump($client);
+	private function _validateTags($client_tags, $posted_tags) {
+		// check all available keys
+		foreach ($client_tags as $row) {
+			// if the client posted this tag
+			if (isset($posted_tags[$row->ident])) {
+				// check if the uuid matches
+				if ($posted_tags[$row->ident] != $row->tag_id) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 	
 	/**
@@ -153,7 +179,8 @@ class Hermes_Server {
 	 * @return string
 	 */
 	private function _validateApiKey($apikey) {
-		return true;
+		$this->client = $this->DB->findRowBy('klant', 'key = "'.$this->_getRequestApiKey().'"');
+		return (isset($this->client->key) && $this->client->key == $apikey);
 	}
 	
 	/**
