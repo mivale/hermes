@@ -8,18 +8,41 @@
  * @copyright Copyright 2010, Michiel van Leening, DMM Websolutions, www.dmmw.nl
  * @version 0.1
  * @license Restricted
+ * 
+ * Requires:
+ * 		sqlite3
+ * 		write access to the database
  *
  * Usage:
  */
 
 class Hermes_Server {
+	protected $DB;
 	
 	/**
 	 * Initialize
 	 */
-	public function __construct() {
+	public function __construct($DB = null) {
+		if (!is_null($DB)) {
+			$this->setDB($DB);
+		}
 	}
 	
+	/**
+	 * @return the $DB
+	 */
+	public function getDB() {
+		return $this->DB;
+	}
+
+	/**
+	 * @param $DB the $DB to set
+	 */
+	public function setDB($DB) {
+		$this->DB = $DB;
+		return $this;
+	}
+
 	/**
 	 * @return void
 	 */
@@ -47,10 +70,17 @@ class Hermes_Server {
 		}
 	}
 	
+	/**
+	 * THIS IS FUGLY !!!! MUST DO OTHERWISE
+	 * @param array $post
+	 * @return string
+	 */
 	private function _public_sendBatch($post = null) {
 	}
 	
 	/**
+	 * THIS IS FUGLY !!!! MUST DO OTHERWISE
+	 * @param array $post
 	 * @return string
 	 */
 	private function _public_createRun($post = null) {
@@ -59,11 +89,31 @@ class Hermes_Server {
 		if ($uuid) {
 			$result = array('code'=> 202, 'message' => 'Run initialized');
 			$result['run-id'] = $uuid->string;
+
+			/**
+			 * add all known given tags to the response - these tags can be used by the client
+			 */
+			$tags = $this->_findTags($post['tags']);
+			exit;
+			
 			$this->_sendOk($result);
 		} else {
 			$result = array('code'=> 500, 'message' => 'Server error minting uuid');
 			$this->_sendError($result);
 		}
+	}
+	
+	/**
+	 * Return tags from the DB for the currently connected client
+	 * optionally filtering by given tags
+	 * 
+	 * @param array $tags array of tag uuids to search for
+	 * @return array $tags the found tags as an associative array
+	 */
+	private function _findTags($tags) {
+		// now go and search the database
+		$client = $this->DB->findAllRowsBy('klant', 'key = "'.$this->_getRequestApiKey().'"');
+		var_dump($client);
 	}
 	
 	/**

@@ -18,7 +18,9 @@ $client = new Hermes_Client();
 
 $client->set_apiKey('893e4410-14bd-11df-8df2-7b90f7c29d12');
 $client->set_serverUrl('http://hermes.leening.nas/');
-
+$client->set_tags(array(
+	'matchmail' => '1b763f80-17b4-11df-9313-c1e90bfb96df' // this tag will be created by DMM
+));
 $client->debug(Hermes_Client::DEBUG_VERBOSE);
 $client->connect();
 
@@ -30,6 +32,7 @@ class Hermes_Client {
 	private $_debugMode = self::DEBUG_OFF;
 	private $_apiKey;
 	private $_serverUrl = '';
+	private $_tags = array();
 	
 	/**
 	 * Initialize
@@ -45,11 +48,16 @@ class Hermes_Client {
 	 * @return Hermes_Client
 	 */
 	public function connect() {
-		$this->_send(array('method'=>'createRun'));
+		$data = array(
+			'method' => 'createRun',
+			'tags' => $this->get_tags()
+		);
+		$this->_send($data);
 		return $this;
 	}
 	
 	/**
+	 * @param $apiKey the $apiKey to set
 	 * @return Hermes_Client
 	 */
 	public function set_apiKey($apiKey) {
@@ -81,6 +89,22 @@ class Hermes_Client {
 	}
 
 	/**
+	 * @return the $_tags
+	 * @return Hermes_Client
+	 */
+	public function get_tags() {
+		return $this->_tags;
+	}
+
+	/**
+	 * @param $_tags the $_tags to set
+	 */
+	public function set_tags($_tags) {
+		$this->_tags = $_tags;
+		return $this;
+	}
+
+	/**
 	 * Turns debug output on
 	 * 
 	 * @param int $mode One of the debug constants
@@ -94,33 +118,31 @@ class Hermes_Client {
 	/** private methods **/
 	
 	/**
-	 * Prepares the data array
-	 */
-	private function _prepareData() {
-		$data = array ( );
-		return $data;
-	}
-	
-	/**
+	 * Sends data to the server
+	 * 
+	 * @param array $data associative array which is sent to server as json
+	 * 
 	 * @return Hermes_Client
 	 */
 	private function _send($data = array()) {
 		
 		$headers = array ('Accept: application/json', 'Content-Type: application/json', 'X-Hermes-Api-Key: ' . $this->get_apiKey() );
 		
+		$json = json_encode($data);
+		
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $this->get_serverUrl() );
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST' );
-		curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data) );
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $json );
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers );
 		
 		$return = curl_exec($ch);
 		
 		if ($this->_debugMode == self::DEBUG_VERBOSE) {
-			echo "JSON: " . json_encode ( $data ) . "\nHeaders: \n\t" . implode ( "\n\t", $headers ) . "\nReturn:\n$return";
+			echo "JSON: " . $json . "\nHeaders: \n\t" . implode ( "\n\t", $headers ) . "\nReturn:\n$return";
 		} else if ($this->_debugMode == self::DEBUG_RETURN) {
-			return array ('json' => json_encode ( $data ), 'headers' => $headers, 'return' => $return );
+			return array ('json' => $json, 'headers' => $headers, 'return' => $return );
 		}
 		
 		if (curl_error($ch) != '') {
@@ -139,6 +161,9 @@ class Hermes_Client {
 	
 	/**
 	 * If a number is 200-299
+	 * 
+	 * @param string $value returncode
+	 * @return bool
 	 */
 	private function _isTwoHundred($value) {
 		return intval ( $value / 100 ) == 2;
@@ -146,6 +171,9 @@ class Hermes_Client {
 	
 	/**
 	 * Validates an e-mailadress
+	 * 
+	 * @param string $email address to check
+	 * @return bool
 	 */
 	private function _validateAddress($email) {
 		// http://php.net/manual/en/function.filter-var.php
