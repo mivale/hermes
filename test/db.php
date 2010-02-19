@@ -2,7 +2,7 @@
 /**
  * Please note: running this script will recreate test.db!
  */
-include('../library/lib.uuid.php');
+include('../library/UUID.php');
 
 $dbfile = __DIR__ . '/test.db';
 unlink($dbfile);

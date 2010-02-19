@@ -17,8 +17,13 @@
  */
 
 class Hermes_Server {
+
+	const VERSION = 0.1;
+	
 	protected $DB;
 	protected $client;
+	protected $frontController;
+	protected $content_type = 'text/html';
 	
 	/**
 	 * Initialize
@@ -48,6 +53,7 @@ class Hermes_Server {
 	 * @param string $url the url to handle
 	 * @return void
 	 */
+	/*
 	public function accept($url) {
 		$apikey = $this->_getRequestApiKey();
 		if (empty($apikey)) {
@@ -72,14 +78,51 @@ class Hermes_Server {
 			}
 		}
 	}
+	*/
+
+	/**
+	 * @return void
+	 */
+	public function createRun() {
+		$apikey = $this->_getRequestApiKey();
+		if (empty($apikey)) {
+			$this->_sendError(array('code'=> 401, 'message' => 'No API key received'));
+		} else {
+			if (!$this->_validateApiKey($apikey)) {
+				$this->_sendResult(array('code'=> 412, 'message' => 'Invalid key received'));
+			} else {
+				$post = $this->_getPost();
+				$this->_createRun($post);
+			}
+		}
+	}
+	
+	/**
+	 * @param string $message
+	 * @return string
+	 */
+	public function notImplemented($message='Not Implemented') {
+		$result = array('code'=> 501, 'message' => $message);
+		$this->_sendError($result);
+	}
+	
+	public function setFrontController(Zend_Controller_Front $front) {
+		$this->frontController = $front;
+		return $this;
+	}
+	
+	
+	public function getFrontController() {
+		return $this->frontController;
+	}
+	
 	
 	/**
 	 * @param array $post
 	 * @return string
 	 */
 	private function _sendBatch($post = null) {
-		$result = array('code'=> 501, 'message' => 'Not Implemented');
-		$this->_sendError($result);
+		$this->notImplemented();
 	}
 	
 	/**
@@ -87,7 +130,6 @@ class Hermes_Server {
 	 * @return string
 	 */
 	private function _createRun($post = null) {
-		include_once('library/lib.uuid.php');
 		$uuid = UUID::mint();
 		if ($uuid) {
 			$result = array('code'=> 202, 'message' => 'Run initialized');
@@ -98,7 +140,13 @@ class Hermes_Server {
 			 */
 			
 			if ($this->_validateTags($this->_findTags(), $post['tags'])) {
-				$this->_sendOk($result);
+				$sql_result = $this->DB->insertRow('run', array('id'=>null,'runid'=>$result['run-id'],'klant_id'=>$this->client->id));
+				if ($sql_result) {
+					$this->_sendOk($result);
+				} else {
+					$result = array('code'=> 500, 'message' => 'Error saving run in database');
+					$this->_sendError($result);
+				}
 			} else {
 				$result = array('code'=> 500, 'message' => 'Error in tag validation');
 				$this->_sendError($result);
@@ -116,30 +164,31 @@ class Hermes_Server {
 	 * @return array $tags the found tags as an associative array
 	 */
 	private function _findTags() {
+		$this->client->tags = array();
 		// client is validated, and record has already been loaded
 		// now go and search the database
-		$this->client->tags = $this->DB->findAllRowsBy('tag', 'klant_id = '.$this->client->id);
+		$tags = $this->DB->findAllRowsBy('tag', 'klant_id = '.$this->client->id);
+		foreach ($tags as $row) {
+			$this->client->tags[$row->ident] = $row->tag_id;
+		}
 		return $this->client->tags;
 	}
 	
 	/**
-	 * Validate current clients tags 
+	 * Validate all given client tags
+	 * Alle tags must validate 
 	 * 
 	 * @param array $tags array of tag uuids to search for
 	 * @return array $tags the found tags as an associative array
 	 */
 	private function _validateTags($client_tags, $posted_tags) {
-		// check all available keys
-		foreach ($client_tags as $row) {
-			// if the client posted this tag
-			if (isset($posted_tags[$row->ident])) {
-				// check if the uuid matches
-				if ($posted_tags[$row->ident] != $row->tag_id) {
-					return false;
-				}
+		foreach ($posted_tags as $ident => $uuid) {
+			if (isset($client_tags[$ident]) && $client_tags[$ident] == $uuid) {
+				return true;
+			} else {
+				return false;
 			}
 		}
-		return true;
 	}
 	
 	/**
@@ -156,6 +205,9 @@ class Hermes_Server {
 	 */
 	private function _sendResult(array $result) {
 //		header('Content-Type: application/json');
+//		header('Content-Type: text/plain');
+		$this->getFrontController()->getResponse()->setHeader('Content-Type',$this->content_type,true);
+		$this->getFrontController()->getResponse()->setHttpResponseCode($result['code']);
 		echo json_encode($result);
 	}
 	
@@ -163,6 +215,7 @@ class Hermes_Server {
 	 * @return string
 	 */
 	private function _sendError(array $result) {
+//		header('Status: '.$result['code'].' '.$result['message']);
 		$result['result'] = false;
 		$this->_sendResult($result);
 	}
@@ -171,6 +224,7 @@ class Hermes_Server {
 	 * @return string
 	 */
 	private function _sendOk(array $result) {
+//		header('Status: '.$result['code']);
 		$result['result'] = true;
 		$this->_sendResult($result);
 	}

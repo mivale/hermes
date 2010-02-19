@@ -15,6 +15,9 @@
  */
 
 class Hermes_Client {
+	
+	const VERSION = 0.1;
+	
 	const DEBUG_OFF = 0;
 	const DEBUG_VERBOSE = 1;
 	const DEBUG_RETURN = 2;
@@ -24,24 +27,40 @@ class Hermes_Client {
 	private $_serverUrl = '';
 	private $_tags = array();
 	
+	public $result;
+	
 	/**
 	 * Initialize
 	 */
-	public function __construct($apiKey = null) {
+	public function __construct($apiKey = null, $tags = null) {
 		if (!is_null($apiKey)) {
 			$this->set_apiKey($apiKey);
+		}
+		if (!is_null($tags)) {
+			$this->set_tags($tags);
 		}
 	}
 	
 	/**
-	 * Connect to the the server and fetch a new run-id
+	 * Connect to the the server and create a new run
 	 * @return Hermes_Client
 	 */
-	public function connect() {
+	public function createRun() {
 		$data = array(
 			'tags' => $this->get_tags()
 		);
-		$this->_send('/create',$data);
+		$this->result = $this->_send('/run', $data);
+		return $this;
+	}
+	
+	/**
+	 * Turns debug output on
+	 * 
+	 * @param int $mode One of the debug constants
+	 * @return Hermes_Client
+	 */
+	public function debug($mode = self::DEBUG_VERBOSE) {
+		$this->_debugMode = $mode;
 		return $this;
 	}
 	
@@ -98,19 +117,6 @@ class Hermes_Client {
 	/*** Private methods **************************************************/
 	
 	/**
-	 * Turns debug output on
-	 * 
-	 * @param int $mode One of the debug constants
-	 * @return Hermes_Client
-	 */
-	public function debug($mode = self::DEBUG_VERBOSE) {
-		$this->_debugMode = $mode;
-		return $this;
-	}
-	
-	/** private methods **/
-	
-	/**
 	 * Sends data to the server
 	 * 
 	 * @param array $data associative array which is sent to server as json
@@ -149,7 +155,7 @@ class Hermes_Client {
 			throw new Exception ( "Error while sending data. Hermes returned HTTP code $httpCode with message \"$message\"" );
 		}
 		
-		return $this;
+		return $return;
 	}
 	
 	/**

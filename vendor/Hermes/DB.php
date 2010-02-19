@@ -34,4 +34,9 @@ class Hermes_DB {
 	public function findRowBy($table, $where) {
 		return $this->findAllRowsBy($table, $where, 1);
 	}
+	
+	public function insertRow($table, $data) {
+		$sth = $this->dbh->prepare('INSERT INTO '.$table.' ('.join(', ', array_keys($data)).') VALUES ('.join(', ', array_values(array_fill(0,count($data),'?'))).')');
+		return $sth->execute(array_values($data));
+	}
 }
