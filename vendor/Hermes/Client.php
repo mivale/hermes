@@ -24,6 +24,7 @@ class Hermes_Client {
 	
 	private $_debugMode = self::DEBUG_OFF;
 	private $_apiKey;
+	private $_runId;
 	private $_serverUrl = '';
 	private $_tags = array();
 	
@@ -49,7 +50,19 @@ class Hermes_Client {
 		$data = array(
 			'tags' => $this->get_tags()
 		);
-		$this->result = $this->_send('/run', $data);
+		$this->result_json = $this->_send('/run', $data);
+		$this->result = json_decode($this->result_json);
+		return $this;
+	}
+	
+	/**
+	 * Send a new mail belonging to a run
+	 * @param array $data batch of mails
+	 * @return object
+	 */
+	public function sendMail($data) {
+		$this->result_json = $this->_send('/run/'.$this->get_runId(), $data);
+		$this->result = json_decode($this->result_json);
 		return $this;
 	}
 	
@@ -62,6 +75,18 @@ class Hermes_Client {
 	public function debug($mode = self::DEBUG_VERBOSE) {
 		$this->_debugMode = $mode;
 		return $this;
+	}
+	
+	/**
+	 * @return bool
+	 */
+	public function isCreated() {
+		if ($this->result->result === true && !empty($this->result->run_id) && $this->_isTwoHundred($this->result->code)) {
+			$this->set_runId($this->result->run_id);
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	/*** Getters & Setters ************************************************/
@@ -82,6 +107,20 @@ class Hermes_Client {
 		return $this->_apiKey;
 	}
 	
+	/**
+	 * @return the $_runId
+	 */
+	public function get_runId() {
+		return $this->_runId;
+	}
+
+	/**
+	 * @param $_runId the $_runId to set
+	 */
+	public function set_runId($_runId) {
+		$this->_runId = $_runId;
+	}
+
 	/**
 	 * @return the $_serverUrl
 	 */

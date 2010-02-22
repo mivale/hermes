@@ -1,14 +1,23 @@
 <?php
 
+namespace Hermes\Server;
+use PDO;
+
 /**
  * @author leening
+ * 
+ * Requires : php5
  *
  */
-class Hermes_DB {
+class DB {
 	protected $dbh;
 	
-	public function __construct($dbfile) {
-		$this->dbh = new PDO('sqlite:' . $dbfile);
+	public function __construct($dsn) {
+		$this->dbh = new PDO($dsn);
+	}
+	
+	public function quote($thing) {
+		return $this->dbh->quote($thing);
 	}
 	
 	public function findAllRows($table) {
@@ -39,4 +48,12 @@ class Hermes_DB {
 		$sth = $this->dbh->prepare('INSERT INTO '.$table.' ('.join(', ', array_keys($data)).') VALUES ('.join(', ', array_values(array_fill(0,count($data),'?'))).')');
 		return $sth->execute(array_values($data));
 	}
+	
+	public function updateRow($table, $primary, $data) {
+		$pval = $this->dbh->quote($data[$primary]);
+		unset($data[$primary]);
+		$sth = $this->dbh->prepare('UPDATE '.$table.' SET '.join(', ', array_map(function ($key){ return "$key=?"; }, array_keys($data) )).' WHERE '.$primary.' = "'.$pval.'"');
+		return $sth->execute(array_values($data));
+	}
+	
 }
