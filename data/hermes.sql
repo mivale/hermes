@@ -4,7 +4,7 @@ INSERT INTO "klant" VALUES(1,'1b75df50-17b4-11df-b5c1-61856f3a2e36','DMM Websolu
 CREATE TABLE tag (id INTEGER PRIMARY KEY AUTOINCREMENT, klant_id INTEGER, tag_id TEXT, ident TEXT);
 INSERT INTO "tag" VALUES(1,1,'1b763f80-17b4-11df-9313-c1e90bfb96df','matchmail');
 CREATE TABLE run (id INTEGER PRIMARY KEY AUTOINCREMENT, klant_id INTEGER, runid TEXT, created DATETIME, updated DATETIME);
-CREATE TABLE tag_run (run_id INTEGER, tag_id INTEGER);
+CREATE TABLE run_tag (run_id INTEGER, tag_id INTEGER);
 DELETE FROM sqlite_sequence;
 INSERT INTO "sqlite_sequence" VALUES('klant',1);
 INSERT INTO "sqlite_sequence" VALUES('tag',1);
