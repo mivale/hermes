@@ -11,7 +11,7 @@
  *
  * Usage:
  * 
- * $client = new Hermes_Client('uuid-api-key');
+ * $client = new Hermes_Client('uuid-api-key', array('tagname' => 'tag-uuid'));
  */
 
 class Hermes_Client {

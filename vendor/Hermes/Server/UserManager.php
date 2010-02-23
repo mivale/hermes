@@ -1,29 +1,12 @@
 <?php
 
 namespace Hermes\Server;
-use Hermes\Server\DB;
+use Hermes\Server\Manager;
 
-class UserManager {
-	
-	protected $db;
-	
+class UserManager extends Manager {
+		
 	function __construct(DB $db) {
 		$this->setDb($db);
-	}
-	
-	/**
-	 * @param $db the $db to set
-	 */
-	public function setDb($db) {
-		$this->db = $db;
-		return $this;
-	}
-
-	/**
-	 * @return the $db
-	 */
-	public function getDb() {
-		return $this->db;
 	}
 	
 	public function find($apikey) {

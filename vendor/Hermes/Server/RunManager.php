@@ -2,48 +2,11 @@
 
 namespace Hermes\Server;
 use Hermes\Server\DB;
+use Hermes\Server\Manager;
 use UUID;
 
-class RunManager {
+class RunManager extends Manager {
 	
-	protected $db, $user;
-	
-	function __construct(DB $db, $user) {
-		$this->setDb($db);
-		$this->setUser($user);
-		// throw new Exception('RunManager not found', 404);
-	}
-	
-	/**
-	 * @param $db the $db to set
-	 */
-	public function setDb($db) {
-		$this->db = $db;
-		return $this;
-	}
-
-	/**
-	 * @return the $db
-	 */
-	public function getDb() {
-		return $this->db;
-	}
-
-	/**
-	 * @param $user the $user to set
-	 */
-	public function setUser($user) {
-		$this->user = $user;
-		return $this;
-	}
-
-	/**
-	 * @return the $user
-	 */
-	public function getUser() {
-		return $this->user;
-	}
-
 	/**
 	 * @param array $post
 	 * @return string
@@ -60,12 +23,18 @@ class RunManager {
 		
 		$run_id = $uuid->string;
 		
-		$sql_result = $this->db->insertRow('run', array('id'=>null,'runid'=>$run_id,'klant_id'=>$this->user->id));
+		$inserted = $this->db->insertRow('run', array('id'=>null,'runid'=>$run_id,'klant_id'=>$this->user->id));
 
-		if (!$sql_result) {
+		if (!$inserted) {
 			throw new Exception('Error saving run in database');
 		}
-			
+		
+		// run created, save tags links
+		foreach ($this->user->tags as $ident => $tag) {
+			$tag_id = $this->db->query('SELECT id FROM tag WHERE tag_id = '.$this->db->quote($tag))->fetchColumn();
+			$this->db->insertRow('run_tag', array('run_id'=>$inserted,'tag_id'=>$tag_id));
+		}
+		
 		return $run_id;
 	}
 

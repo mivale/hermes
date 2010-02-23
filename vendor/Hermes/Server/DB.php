@@ -16,10 +16,6 @@ class DB {
 		$this->dbh = new PDO($dsn);
 	}
 	
-	public function quote($thing) {
-		return $this->dbh->quote($thing);
-	}
-	
 	public function findAllRows($table) {
 		$rows = array();
 		foreach ( $this->dbh->query('SELECT * FROM '.$table,  PDO::FETCH_OBJ) as $row ) {
@@ -46,7 +42,12 @@ class DB {
 	
 	public function insertRow($table, $data) {
 		$sth = $this->dbh->prepare('INSERT INTO '.$table.' ('.join(', ', array_keys($data)).') VALUES ('.join(', ', array_values(array_fill(0,count($data),'?'))).')');
-		return $sth->execute(array_values($data));
+		$result = $sth->execute(array_values($data));
+		if (! $result) {
+			return false;
+		}
+		$inserted_id = $this->dbh->query('SELECT last_insert_rowid();')->fetchColumn();
+		return $inserted_id;
 	}
 	
 	public function updateRow($table, $primary, $data) {
@@ -54,6 +55,14 @@ class DB {
 		unset($data[$primary]);
 		$sth = $this->dbh->prepare('UPDATE '.$table.' SET '.join(', ', array_map(function ($key){ return "$key=?"; }, array_keys($data) )).' WHERE '.$primary.' = "'.$pval.'"');
 		return $sth->execute(array_values($data));
+	}
+	
+	public function quote($thing) {
+		return $this->dbh->quote($thing);
+	}
+	
+	public function query($thing) {
+		return $this->dbh->query($thing);
 	}
 	
 }
