@@ -1,4 +1,8 @@
 <?php
+/**
+ * Included from index.php
+ */
+
 $front('*')->action(function ($con) {
     echo 'Are you lost?';
 });
@@ -31,6 +35,13 @@ $front('/run/:runid')
 		$con->hermes->notImplemented();
 	})
 	->post(function ($con) {
-		// $con->hermes->notImplemented();
-		var_dump($con->runid, $con->postbody);
+		try {
+			$con->mailmanager->add($con->runid, $con->postbody);
+			$con->hermes->success(array(
+				'code' => 202,
+				'message' => 'Messages accepted',
+			));
+		} catch (Exception $e) {
+			$con->response->setBody(json_encode(array('message'=>$e->getMessage(), 'code' => $e->getCode(), 'result' => false, 'mails' => $e->getResults())));
+		}
 	});

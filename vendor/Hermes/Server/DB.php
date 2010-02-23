@@ -26,7 +26,9 @@ class DB {
 	
 	public function findAllRowsBy($table, $where, $limit = null) {
 		$rows = array();
-		foreach ( $this->dbh->query('SELECT * FROM '.$table.' WHERE '.$where,  PDO::FETCH_OBJ) as $row ) {
+		$query = 'SELECT * FROM '.$table.' WHERE '.$where;
+		$result = $this->dbh->query($query,  PDO::FETCH_OBJ);
+		foreach ( $result as $row ) {
 			$rows[] = $row;
 			if (!is_null($limit) && count($rows) == $limit) {
 				if ($limit == 1) { return $row; }

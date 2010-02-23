@@ -16,7 +16,13 @@ $client->set_tags(array(
 	'matchmail' => '1b763f80-17b4-11df-9313-c1e90bfb96df', // this tag will be created by DMM, only use approved tags
 ));
 $client->debug(Hermes_Client::DEBUG_OFF);
-$client->createRun();
+
+try {
+	$client->createRun();
+} catch (Exception $e) {
+	echo $e->getMessage();
+	exit;
+}
 
 if ($client->isCreated()) {
 	
@@ -27,7 +33,7 @@ if ($client->isCreated()) {
 	
 	foreach (range(1,10) as $i) {
 		$testmails['mails'][] = array(
-			'uniq' => microtime(true).'/'.$i,
+			'uniq' => $i, // microtime(true).'/'.$i,
 			'headers' => array(
 				'From' => 'leening@dmmw.nl',
 				'To' => 'michiel@dmmw.nl',
@@ -40,8 +46,13 @@ if ($client->isCreated()) {
 	// test breakage of apikey
 //	$client->set_apiKey('1b5df50-17b4-11df-b5c1-61856f3a2e36'); // this key will be created by DMM
 	
-	$client->sendMail($testmails);
-	echo($client->result_json);
+	try {
+		$client->sendMail($testmails);
+		echo($client->result_json);
+	} catch (Exception $e) {
+		echo $e->getMessage();
+		exit;
+	}
 } else {
 	// Error !
 }

@@ -4,6 +4,7 @@ namespace Hermes\Server;
 use Hermes\Server\DB;
 use Hermes\Server\Manager;
 use UUID;
+use Exception;
 
 class RunManager extends Manager {
 	
@@ -23,7 +24,7 @@ class RunManager extends Manager {
 		
 		$run_id = $uuid->string;
 		
-		$inserted = $this->db->insertRow('run', array('id'=>null,'runid'=>$run_id,'klant_id'=>$this->user->id));
+		$inserted = $this->db->insertRow('run', array('id'=>null,'run_id'=>$run_id,'user_id'=>$this->user->id));
 
 		if (!$inserted) {
 			throw new Exception('Error saving run in database');
@@ -37,6 +38,10 @@ class RunManager extends Manager {
 		
 		return $run_id;
 	}
+	
+	public function get($runid) {
+		return $this->db->findRowBy('run', 'run_id = '.$this->db->quote($runid));
+	}
 
 	/**
 	 * Return tags from the DB for the currently connected client
@@ -48,7 +53,7 @@ class RunManager extends Manager {
 		$this->user->tags = array();
 		// client is validated, and record has already been loaded
 		// now go and search the database
-		$tags = $this->db->findAllRowsBy('tag', 'klant_id = '.$this->user->id);
+		$tags = $this->db->findAllRowsBy('tag', 'user_id = '.$this->user->id);
 		foreach ($tags as $row) {
 			$this->user->tags[$row->ident] = $row->tag_id;
 		}

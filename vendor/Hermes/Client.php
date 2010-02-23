@@ -189,8 +189,8 @@ class Hermes_Client {
 		
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		
-		if (! $this->_isTwoHundred ($httpCode)) {
-			$message = json_decode ( $return )->message;
+		if (! $this->_isTwoHundred($httpCode)) {
+			$message = json_decode($return)->message;
 			throw new Exception ( "Error while sending data. Hermes returned HTTP code $httpCode with message \"$message\"" );
 		}
 		
