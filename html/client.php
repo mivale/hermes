@@ -31,7 +31,7 @@ if ($client->isCreated()) {
 		'mails' => array()
 	);
 	
-	foreach (range(1,10) as $i) {
+	foreach (range(1, 5) as $i) {
 		$testmails['mails'][] = array(
 			'uniq' => $i, // microtime(true).'/'.$i,
 			'headers' => array(

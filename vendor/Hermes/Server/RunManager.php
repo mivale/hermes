@@ -24,7 +24,8 @@ class RunManager extends Manager {
 		
 		$run_id = $uuid->string;
 		
-		$inserted = $this->db->insertRow('run', array('id'=>null,'run_id'=>$run_id,'user_id'=>$this->user->id));
+		// TODO: start transaction
+		$inserted = $this->db->insertRow('run', array('id' => null, 'run_id' => $run_id, 'user_id' => $this->user->id));
 
 		if (!$inserted) {
 			throw new Exception('Error saving run in database');
@@ -33,8 +34,11 @@ class RunManager extends Manager {
 		// run created, save tags links
 		foreach ($this->user->tags as $ident => $tag) {
 			$tag_id = $this->db->query('SELECT id FROM tag WHERE tag_id = '.$this->db->quote($tag))->fetchColumn();
-			$this->db->insertRow('run_tag', array('run_id'=>$inserted,'tag_id'=>$tag_id));
+			// TODO: error checking?
+			$this->db->insertRow('run_tag', array('run_id' => $inserted, 'tag_id' => $tag_id));
 		}
+		
+		// TODO: commit transaction
 		
 		return $run_id;
 	}

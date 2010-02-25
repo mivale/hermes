@@ -3,22 +3,22 @@
  * Included from index.php
  */
 
-$front('*')->action(function ($con) {
+$front('*')->action(function ($container) {
     echo 'Are you lost?';
 });
 
 $front('/run')
-	->action(function ($con) {
+	->action(function ($container) {
 	})
-	->get(function ($con) {
-		$con->hermes->notImplemented();
+	->get(function ($container) {
+		$container->hermes->notImplemented();
 	})
-	->head(function ($con) {
-		$con->hermes->notImplemented();
+	->head(function ($container) {
+		$container->hermes->notImplemented();
 	})
-	->post(function ($con) {
-		$run_id = $con->runmanager->create($con->postbody);
-		$con->hermes->success(array(
+	->post(function ($container) {
+		$run_id = $container->runmanager->create($container->postbody);
+		$container->hermes->success(array(
 			'code' => 202,
 			'run_id' => $run_id,
 			'message' => 'Run initialized',
@@ -26,22 +26,22 @@ $front('/run')
 	});
 
 $front('/run/:runid')
-	->action(function ($con) {
+	->action(function ($container) {
 	})
-	->get(function ($con) {
-		$con->hermes->notImplemented();
+	->get(function ($container) {
+		$container->hermes->notImplemented();
 	})
-	->head(function ($con) {
-		$con->hermes->notImplemented();
+	->head(function ($container) {
+		$container->hermes->notImplemented();
 	})
-	->post(function ($con) {
+	->post(function ($container) {
 		try {
-			$con->mailmanager->add($con->runid, $con->postbody);
-			$con->hermes->success(array(
+			$container->mailmanager->add($container->runid, $container->postbody);
+			$container->hermes->success(array(
 				'code' => 202,
 				'message' => 'Messages accepted',
 			));
 		} catch (Exception $e) {
-			$con->response->setBody(json_encode(array('message'=>$e->getMessage(), 'code' => $e->getCode(), 'result' => false, 'mails' => $e->getResults())));
+			$container->response->setBody(json_encode(array('message'=>$e->getMessage(), 'code' => $e->getCode(), 'result' => false, 'mails' => $e->getResults())));
 		}
 	});

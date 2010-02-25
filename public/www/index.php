@@ -3,22 +3,24 @@
  * @author Michiel van Leening <leening@dmmw.nl>
  */
 
-//var_dump($_SERVER); exit;
-
 define('BASEPATH', realpath(__DIR__.'/../..'));
 set_include_path(get_include_path(). PATH_SEPARATOR. BASEPATH.'/library'. PATH_SEPARATOR. BASEPATH.'/vendor');
 
 use snap\Snap, snap\Loader, snap\Front;
-use Hermes\Server, Hermes\Server\DB, Hermes\Server\UserManager, Hermes\Server\RunManager, Hermes\Server\MailManager, Hermes\Server\Auth, Hermes\Server\Exception;
-
-$config = (object)array(
-	'dsn' => 'sqlite:' . BASEPATH.'/data/hermes.db'
-);
+use Hermes\Server, Hermes\Server\Config, Hermes\Server\DB;
+use Hermes\Server\Auth, Hermes\Server\Exception;
+use Hermes\Server\UserManager, Hermes\Server\RunManager, Hermes\Server\MailManager;
 
 // setup the autoloader
 require_once('Zend/Loader/Autoloader.php');
 $loader = Zend_Loader_Autoloader::getInstance();
 $loader->setFallbackAutoloader(true);
+
+/*
+$config = new Config(BASEPATH.'/library/config.php');
+*/
+
+$config = new \Zend_Config(require BASEPATH.'/library/config.php');
 
 $front = Front::getInstance();
 
@@ -35,9 +37,9 @@ $container->user = $container->usermanager->find($container->apikey);
 $container->runmanager = new RunManager($container->db, $container->user);
 $container->mailmanager = new MailManager($container->runmanager);
 
-$container->postbody = Hermes\Server::getPostBody();
-
 try {
+	$container->postbody = Hermes\Server::getPostBody();
+
 	if (! $container->apikey) {
 		throw new Exception('No API key received', 401);
 	}

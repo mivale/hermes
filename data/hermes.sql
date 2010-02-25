@@ -5,7 +5,7 @@ CREATE TABLE tag (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, tag_id 
 INSERT INTO "tag" VALUES(1,1,'1b763f80-17b4-11df-9313-c1e90bfb96df','matchmail');
 CREATE TABLE run (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, run_id TEXT, created DATETIME, updated DATETIME);
 CREATE TABLE run_tag (run_id INTEGER, tag_id INTEGER);
-CREATE TABLE mail (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT, uniq TEXT, headers TEXT, body TEXT, created DATETIME, updated DATETIME);
+CREATE TABLE mail (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT, uniq TEXT, headers TEXT, body TEXT, created DATETIME, updated DATETIME, sent DATETIME);
 DELETE FROM sqlite_sequence;
 INSERT INTO "sqlite_sequence" VALUES('user',1);
 INSERT INTO "sqlite_sequence" VALUES('tag',1);

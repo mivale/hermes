@@ -3,12 +3,13 @@
 namespace Hermes\Server;
 use Hermes\Server\RunManager;
 use Hermes\Server\Exception;
+use Hermes\Server\Mail;
 
 class MailManager {
 	
+	protected $run;
 	protected $runmanager;
-	
-	private $run;
+	protected $bounceMailbox = 'bounces+%1$s+%2$s@bounces.hermes.dmmw.nl';
 
 	public function __construct(RunManager $run) {
 		$this->setRunmanager($run);
@@ -31,7 +32,7 @@ class MailManager {
 	
 	/**
 	 * 
-	 * TODO: refactor this to separate Mail class
+	 * TODO: refactor this to separate Mail class?
 	 * 
 	 * @param string $runid
 	 * @param object $postbody
@@ -41,30 +42,61 @@ class MailManager {
 			$this->run = $this->runmanager->get($runid);
 		}
 		if (empty($this->run->run_id)) {
-			throw new \Exception('Run with id '.$runid.' not found', 404);
+			throw new Exception('Run with id '.$runid.' not found', 404);
 		}
 		// holds any errors
-		$result = array();
+		$errors = array();
 		foreach ($postbody['mails'] as $mail) {
-			$inserted = $this->runmanager->getDb()->insertRow('mail', array(
-				'id' => null,
-				'run_id' => $this->run->run_id,
-				'uniq' => $mail['uniq'],
-				'headers' => json_encode($mail['headers']),
-				'body' => $mail['body']
-			));
-			if (!$inserted) {
-				$result[] = array(
-					'uniq' => $mail['uniq'],
-					'headers' => $mail['headers'],
-					'code' => 500,
-					'message' => 'Not inserted'
-				);
+			
+			try {
+				$inserted = $this->save($mail);
+				$queue = new Mail($mail, sprintf($this->bounceMailbox, $inserted, $this->run->run_id));
+				$queue->setTransport(new Mail\Transport\Debug());
+				try {
+					$queue->send();
+				} catch (Exception $e) {
+					throw new Exception('Email not sent', 500, $e->getResults());
+				}
+			} catch (Exception $e) {
+				$errors[] = $e->getResults();
 			}
 		}
-		// check $result
-		if (count($result)) {
-			throw new Exception('(some) mails were not added', 500, $result);
+		// check $errors
+		if (count($errors)) {
+			throw new Exception('(some) mails were not added', 500, $errors);
 		}
 	}
+	
+	/**
+	 * Store an email in the database
+	 * 
+	 * @param array $data
+	 * @return int $inserted
+	 * @throws Hermes\Server\Exception
+	 */
+	protected function save(array $data) {
+		$mail = array(
+			'id' => null,
+			'run_id' => $this->run->run_id,
+			'uniq' => $data['uniq'],
+			'headers' => json_encode($data['headers']),
+			'body' => $data['body']
+		);
+		$inserted = $this->runmanager->getDb()->insertRow('mail', $mail);
+		if (!$inserted) {
+			throw new Exception('Error saving mail', 500, array(
+				'uniq' => $data['uniq'],
+				'headers' => $data['headers'],
+				'code' => 500,
+				'message' => 'Not inserted'
+			));
+		} else {
+			return $inserted;
+		}
+	}
+
+	public function validate() {
+		return true;
+	}
+	
 }

@@ -1,7 +1,7 @@
 <?php
 
 namespace Hermes;
-use Exception;
+use Hermes\Server\Exception;
 
 /**
  * Hermes PHP Server class
@@ -70,7 +70,11 @@ class Server {
 	public static function getPostBody() {
 		$handle = fopen('php://input','r');
 		$jsonInput = fgets($handle);
-		return json_decode($jsonInput,true);
+		$object = json_decode($jsonInput, true);
+		if (is_null($object)) {
+			throw new Exception('Invalid or empty postbody');
+		}
+		return $object;
 	}
 	
 	/**
