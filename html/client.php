@@ -43,7 +43,7 @@ if ($client->isCreated()) {
 		);
 	}
 	
-	// test breakage of apikey
+//	test breakage of apikey
 //	$client->set_apiKey('1b5df50-17b4-11df-b5c1-61856f3a2e36'); // this key will be created by DMM
 	
 	try {

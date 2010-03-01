@@ -12,8 +12,8 @@ use PDO;
 class DB {
 	protected $dbh;
 	
-	public function __construct($dsn) {
-		$this->dbh = new PDO($dsn);
+	public function __construct($database) {
+		$this->dbh = new PDO($database->dsn, $database->user, $database->pass);
 	}
 	
 	public function findAllRows($table) {
@@ -48,7 +48,7 @@ class DB {
 		if (! $result) {
 			return false;
 		}
-		$inserted_id = $this->dbh->query('SELECT last_insert_rowid();')->fetchColumn();
+		$inserted_id = $this->_getInsertId();
 		return $inserted_id;
 	}
 	
@@ -65,6 +65,14 @@ class DB {
 	
 	public function query($thing) {
 		return $this->dbh->query($thing);
+	}
+	
+	/**
+	 * This function needs to be overridden
+	 * @return int
+	 */
+	protected function _getInsertId() {
+		return $this->dbh->query('SELECT LAST_INSERT_ID();')->fetchColumn();
 	}
 	
 }

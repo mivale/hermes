@@ -30,7 +30,8 @@ $container->apikey = Auth::getRequestApiKey();
 $container->hermes = new Server($container->response);
 //$container->hermes->setContentType('application/json');
 
-$container->db = new DB($config->dsn);
+$container->db = new DB($config->database);
+
 $container->usermanager = new UserManager($container->db);
 $container->user = $container->usermanager->find($container->apikey);
 

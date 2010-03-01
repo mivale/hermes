@@ -10,7 +10,7 @@ class UserManager extends Manager {
 	}
 	
 	public function find($apikey) {
-		return $this->db->findRowBy('user', 'key = '.$this->db->quote($apikey));
+		return $this->db->findRowBy('user', 'apikey = '.$this->db->quote($apikey));
 	}
 	
 }
